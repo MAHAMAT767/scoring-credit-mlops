@@ -1,0 +1,19 @@
+# Données (ne pas versionner les CSV volumineux)
+data/*.csv
+
+# MLflow
+mlflow.db
+mlruns/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Artefacts générés
+artifacts/
+logs/
+*.pkl
+*.joblib

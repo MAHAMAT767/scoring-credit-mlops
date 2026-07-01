@@ -1,0 +1,25 @@
+# ─── Cœur data science ───────────────────────────────
+pandas
+numpy
+scikit-learn
+imbalanced-learn
+xgboost
+
+# ─── Tracking & MLOps ────────────────────────────────
+mlflow
+
+# ─── Interprétabilité ────────────────────────────────
+shap
+lime
+
+# ─── Data drift (étape 7) ────────────────────────────
+evidently
+
+# ─── API (étape 5) ───────────────────────────────────
+fastapi
+uvicorn[standard]
+pydantic
+
+# ─── Utilitaires ─────────────────────────────────────
+matplotlib
+joblib
