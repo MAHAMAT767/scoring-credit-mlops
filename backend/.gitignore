@@ -17,3 +17,12 @@ artifacts/
 logs/
 *.pkl
 *.joblib
+
+# Secrets (token Hugging Face)
+.env
+
+# Exceptions : fichiers requis par l'API en production
+!artifacts/
+!artifacts/model.pkl
+!artifacts/metadata.json
+!data/UCI_Credit_Card.csv

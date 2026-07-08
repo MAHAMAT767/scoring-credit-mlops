@@ -1,0 +1,30 @@
+{
+  "model_name": "rf",
+  "threshold": 0.3824,
+  "cost_fn": 5.0,
+  "cost_fp": 1.0,
+  "mlflow_run_id": "a44cf65c91844238ae727a851343a95b",
+  "trained_at": "2026-07-02T18:44:48.553965",
+  "test_metrics": {
+    "roc_auc": 0.7770022307436892,
+    "f1": 0.4987026466009341,
+    "precision": 0.3802928373565493,
+    "recall": 0.7241899020346647,
+    "business_cost": 3396.0,
+    "cost_per_client": 0.566,
+    "tn": 3107,
+    "fp": 1566,
+    "fn": 366,
+    "tp": 961
+  },
+  "baseline_cost_per_client": 1.0441666666666667,
+  "imbalance_comparison": {
+    "class_weight_cost": 0.566,
+    "smote_cost": 0.5896666666666667
+  },
+  "cv_costs": {
+    "logreg": 0.5654166666666667,
+    "rf": 0.5388333333333333,
+    "xgb": 0.5448333333333334
+  }
+}

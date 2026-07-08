@@ -1,0 +1,46 @@
+{
+  "client_index": 3909,
+  "predicted_default_proba": 0.9645870816847794,
+  "contributions": [
+    {
+      "feature": "num__PAY_1 > 0.01",
+      "weight": 0.0580246140888697
+    },
+    {
+      "feature": "num__MAX_DELAY > 1.23",
+      "weight": 0.042541616997068245
+    },
+    {
+      "feature": "-0.71 < num__EVER_DELAYED <= 1.40",
+      "weight": 0.04001511518572466
+    },
+    {
+      "feature": "num__MEAN_PAY_STATUS > 0.19",
+      "weight": 0.03704103383680716
+    },
+    {
+      "feature": "num__LIMIT_BAL > 0.58",
+      "weight": -0.027813041405204224
+    },
+    {
+      "feature": "num__PAY_2 > 0.11",
+      "weight": 0.02464975725293848
+    },
+    {
+      "feature": "num__CREDIT_UTILIZATION <= -0.98",
+      "weight": -0.021532663586031262
+    },
+    {
+      "feature": "num__PAYMENT_RATIO <= -0.08",
+      "weight": 0.021033477870453277
+    },
+    {
+      "feature": "cat__EDUCATION_4 <= 0.00",
+      "weight": 0.017644525864900545
+    },
+    {
+      "feature": "num__PAYAMT_MEAN <= -0.57",
+      "weight": 0.016024033017503984
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "generated_at": "2026-07-02T18:49:47.486535",
+  "top_drivers": [
+    {
+      "rank": 1,
+      "feature": "num__MAX_DELAY",
+      "importance": 0.03661653428631843,
+      "direction": "diminue le risque"
+    },
+    {
+      "rank": 2,
+      "feature": "num__PAY_1",
+      "importance": 0.034620044277337086,
+      "direction": "diminue le risque"
+    },
+    {
+      "rank": 3,
+      "feature": "num__N_MONTHS_DELAYED",
+      "importance": 0.03405127176214012,
+      "direction": "diminue le risque"
+    },
+    {
+      "rank": 4,
+      "feature": "num__EVER_DELAYED",
+      "importance": 0.03286444426618946,
+      "direction": "diminue le risque"
+    },
+    {
+      "rank": 5,
+      "feature": "num__MEAN_PAY_STATUS",
+      "importance": 0.026856722433567622,
+      "direction": "diminue le risque"
+    },
+    {
+      "rank": 6,
+      "feature": "num__LIMIT_BAL",
+      "importance": 0.015583066893473075,
+      "direction": "diminue le risque"
+    },
+    {
+      "rank": 7,
+      "feature": "num__PAY_2",
+      "importance": 0.015462725033334838,
+      "direction": "diminue le risque"
+    },
+    {
+      "rank": 8,
+      "feature": "num__CREDIT_UTILIZATION",
+      "importance": 0.014617184998192369,
+      "direction": "diminue le risque"
+    },
+    {
+      "rank": 9,
+      "feature": "num__LAST_BILL_RATIO",
+      "importance": 0.014230216117283366,
+      "direction": "diminue le risque"
+    },
+    {
+      "rank": 10,
+      "feature": "num__PAYAMT_MEAN",
+      "importance": 0.013453976136194958,
+      "direction": "diminue le risque"
+    }
+  ]
+}
