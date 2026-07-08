@@ -23,3 +23,6 @@ pydantic
 # ─── Utilitaires ─────────────────────────────────────
 matplotlib
 joblib
+
+huggingface_hub
+python-dotenv
