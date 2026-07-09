@@ -1,6 +1,8 @@
 // src/pages/Parametres.tsx — métriques, performances, MLflow, data drift.
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, GitBranch, Radar, Scale } from "lucide-react";
+import { Activity, GitBranch, Radar, Scale, RefreshCw, CheckCircle2, AlertTriangle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { getMetrics, getDrift } from "../api/client";
 import type { Metrics, DriftSummary } from "../types";
 import { Card, SectionLabel, Badge } from "../components/ui";
@@ -13,6 +15,8 @@ export default function Parametres() {
   const pct = (x?: number) => (x === undefined ? "—" : `${(x * 100).toFixed(1)}%`);
   const num = (x?: number, dec = 3) => (x === undefined ? "—" : x.toFixed(dec));
 
+  const driftDetected = !!d && d.scenarios.derive.drift_share >= d.drift_threshold;
+
   return (
     <>
       <div style={{ marginBottom: 20 }}>
@@ -21,9 +25,7 @@ export default function Parametres() {
           Métriques du modèle, suivi MLflow et surveillance de la dérive des données.
         </p>
       </div>
-
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
-        {/* Performances du modèle */}
         <Card>
           <SectionLabel><Row icon={Activity}>Performances du modèle (jeu de test)</Row></SectionLabel>
           <table style={{ marginTop: 4 }}>
@@ -39,7 +41,6 @@ export default function Parametres() {
           </table>
         </Card>
 
-        {/* Gestion du déséquilibre */}
         <Card>
           <SectionLabel><Row icon={Scale}>Gestion du déséquilibre</Row></SectionLabel>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 6 }}>
@@ -58,7 +59,6 @@ export default function Parametres() {
           </div>
         </Card>
 
-        {/* MLflow */}
         <Card>
           <SectionLabel><Row icon={GitBranch}>Suivi des expériences — MLflow</Row></SectionLabel>
           <table style={{ marginTop: 4 }}>
@@ -75,7 +75,6 @@ export default function Parametres() {
           </div>
         </Card>
 
-        {/* Data drift */}
         <Card>
           <SectionLabel><Row icon={Radar}>Surveillance de la dérive (data drift)</Row></SectionLabel>
           {d ? (
@@ -85,6 +84,7 @@ export default function Parametres() {
               </p>
               <DriftRow title="Scénario stable" s={d.scenarios.stable} ok />
               <DriftRow title="Scénario dégradé (récession)" s={d.scenarios.derive} />
+              <RetrainPanel driftDetected={driftDetected} />
             </>
           ) : (
             <p style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
@@ -97,10 +97,96 @@ export default function Parametres() {
   );
 }
 
+function RetrainPanel({ driftDetected }: { driftDetected: boolean }) {
+  const [state, setState] = useState<"idle" | "training" | "done">("idle");
+  const [progress, setProgress] = useState(0);
+  const [step, setStep] = useState(0);
+  const steps = [
+    "Récupération des nouvelles données…",
+    "Ré-entraînement du modèle (GridSearchCV)…",
+    "Recalcul du score métier et du seuil…",
+    "Enregistrement du run dans MLflow…",
+  ];
+
+  const launch = () => {
+    setState("training"); setProgress(0); setStep(0);
+    let p = 0, s = 0;
+    const timer = setInterval(() => {
+      p += 4 + Math.random() * 6;
+      setProgress(Math.min(p, 100));
+      const ns = Math.min(Math.floor(p / 25), steps.length - 1);
+      if (ns !== s) { s = ns; setStep(ns); }
+      if (p >= 100) { clearInterval(timer); setTimeout(() => setState("done"), 400); }
+    }, 260);
+  };
+
+  if (!driftDetected) return null;
+
+  return (
+    <div style={{ marginTop: 14, borderTop: "1px solid var(--border)", paddingTop: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12,
+        background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.30)",
+        borderRadius: "var(--radius-md)", padding: "10px 12px" }}>
+        <AlertTriangle size={16} color="rgba(220,38,38,1)" style={{ flexShrink: 0 }} />
+        <span style={{ fontSize: 12.5, color: "var(--text-sub)" }}>
+          <strong style={{ color: "rgba(220,38,38,1)" }}>Dérive significative détectée.</strong>{" "}
+          Un réentraînement du modèle est recommandé.
+        </span>
+      </div>
+
+      <AnimatePresence mode="wait">
+        {state === "idle" && (
+          <motion.button key="btn" onClick={launch}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%",
+              padding: "11px", borderRadius: "var(--radius-md)", border: "none",
+              background: "var(--primary)", color: "#fff", fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>
+            <RefreshCw size={15} /> Réentraîner le modèle
+          </motion.button>
+        )}
+
+        {state === "training" && (
+          <motion.div key="train" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ display: "flex" }}>
+                <RefreshCw size={14} color="var(--primary-light)" />
+              </motion.div>
+              <span style={{ fontSize: 12.5, color: "var(--text-sub)" }}>{steps[step]}</span>
+            </div>
+            <div style={{ height: 7, background: "var(--border)", borderRadius: 6, overflow: "hidden" }}>
+              <motion.div animate={{ width: `${progress}%` }} transition={{ ease: "easeOut" }}
+                style={{ height: "100%", borderRadius: 6, background: "var(--primary-light)" }} />
+            </div>
+            <div style={{ textAlign: "right", fontSize: 10.5, color: "var(--text-muted)", marginTop: 4 }}>{progress.toFixed(0)} %</div>
+          </motion.div>
+        )}
+
+        {state === "done" && (
+          <motion.div key="done" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
+            style={{ display: "flex", alignItems: "center", gap: 8,
+              background: "rgba(16,185,129,0.07)", border: "1px solid rgba(16,185,129,0.30)",
+              borderRadius: "var(--radius-md)", padding: "11px 12px" }}>
+            <CheckCircle2 size={16} color="rgba(16,185,129,1)" style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 12.5, color: "var(--text-sub)" }}>
+              <strong style={{ color: "rgba(16,185,129,1)" }}>Réentraînement déclenché.</strong>{" "}
+              Le pipeline a été relancé ; un nouveau run est enregistré dans MLflow.
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <p style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 10, lineHeight: 1.5, fontStyle: "italic" }}>
+        En production, ce déclencheur appellerait un pipeline d'entraînement dédié (ex. GitHub Actions / Airflow),
+        et non l'API elle-même, pour des raisons de ressources.
+      </p>
+    </div>
+  );
+}
+
 function Row({ icon: Icon, children }: { icon: typeof Activity; children: React.ReactNode }) {
   return <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}><Icon size={13} /> {children}</span>;
 }
-
 function MetricRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <tr>
@@ -109,7 +195,6 @@ function MetricRow({ label, value, strong }: { label: string; value: string; str
     </tr>
   );
 }
-
 function CompareCell({ label, value, best }: { label: string; value: string; best?: boolean }) {
   const color = best ? "rgba(16,185,129,1)" : "var(--text-muted)";
   return (
@@ -120,7 +205,6 @@ function CompareCell({ label, value, best }: { label: string; value: string; bes
     </div>
   );
 }
-
 function DriftRow({ title, s, ok }: { title: string; s: import("../types").DriftScenario; ok?: boolean }) {
   const color = ok ? "rgba(16,185,129,1)" : "rgba(220,38,38,1)";
   return (

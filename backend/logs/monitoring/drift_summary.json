@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-07-09T22:35:06.350889",
+  "drift_threshold": 0.3,
+  "n_features_monitored": 32,
+  "scenarios": {
+    "stable": {
+      "tag": "stable",
+      "n_drifted": 0,
+      "drift_share": 0.0,
+      "html_report": "C:\\Users\\HP\\OneDrive - UCAO SENEGAL\\Bureau\\cours M2\\ml\\Exam\\backend\\logs\\monitoring\\data_drift_stable_20260709_223500.html",
+      "decision": "OK : pas de dérive détectée",
+      "prediction_drift": {
+        "proba_defaut_reference": 0.4078,
+        "proba_defaut_courant": 0.4073,
+        "hausse_relative": -0.1
+      }
+    },
+    "derive": {
+      "tag": "derive",
+      "n_drifted": 10,
+      "drift_share": 0.3125,
+      "html_report": "C:\\Users\\HP\\OneDrive - UCAO SENEGAL\\Bureau\\cours M2\\ml\\Exam\\backend\\logs\\monitoring\\data_drift_derive_20260709_223505.html",
+      "decision": "ALERTE : dérive significative -> réentraînement recommandé",
+      "prediction_drift": {
+        "proba_defaut_reference": 0.4078,
+        "proba_defaut_courant": 0.5177,
+        "hausse_relative": 26.9
+      }
+    }
+  }
+}

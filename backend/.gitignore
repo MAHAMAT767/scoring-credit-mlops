@@ -26,3 +26,8 @@ logs/
 !artifacts/model.pkl
 !artifacts/metadata.json
 !data/UCI_Credit_Card.csv
+
+# Exception : rapport de drift requis par l'API deployee
+!logs/
+!logs/monitoring/
+!logs/monitoring/drift_summary.json
