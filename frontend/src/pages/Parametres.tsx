@@ -1,9 +1,9 @@
 // src/pages/Parametres.tsx — métriques, performances, MLflow, data drift.
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, GitBranch, Radar, Scale, RefreshCw, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Activity, GitBranch, Radar, Scale, RefreshCw, CheckCircle2, AlertTriangle, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getMetrics, getDrift } from "../api/client";
+import { getMetrics, getDrift, retrain, getRetrainStatus } from "../api/client";
 import type { Metrics, DriftSummary } from "../types";
 import { Card, SectionLabel, Badge } from "../components/ui";
 
@@ -98,26 +98,41 @@ export default function Parametres() {
 }
 
 function RetrainPanel({ driftDetected }: { driftDetected: boolean }) {
-  const [state, setState] = useState<"idle" | "training" | "done">("idle");
-  const [progress, setProgress] = useState(0);
-  const [step, setStep] = useState(0);
-  const steps = [
-    "Récupération des nouvelles données…",
-    "Ré-entraînement du modèle (GridSearchCV)…",
-    "Recalcul du score métier et du seuil…",
-    "Enregistrement du run dans MLflow…",
-  ];
+  const [state, setState] = useState<"idle" | "training" | "done" | "error" | "simulated">("idle");
+  const [statusMsg, setStatusMsg] = useState("");
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const launch = () => {
-    setState("training"); setProgress(0); setStep(0);
-    let p = 0, s = 0;
-    const timer = setInterval(() => {
-      p += 4 + Math.random() * 6;
-      setProgress(Math.min(p, 100));
-      const ns = Math.min(Math.floor(p / 25), steps.length - 1);
-      if (ns !== s) { s = ns; setStep(ns); }
-      if (p >= 100) { clearInterval(timer); setTimeout(() => setState("done"), 400); }
-    }, 260);
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+
+  const launch = async () => {
+    setState("training");
+    setStatusMsg("Envoi de la demande de réentraînement…");
+    try {
+      const res = await retrain();
+      if (res.mode === "simulated") {
+        setStatusMsg(res.message);
+        setState("simulated");
+        return;
+      }
+      // Mode réel (local) : on suit l'état jusqu'à la fin
+      setStatusMsg("Réentraînement en cours (peut prendre quelques minutes)…");
+      pollRef.current = setInterval(async () => {
+        try {
+          const s = await getRetrainStatus();
+          if (s.message) setStatusMsg(s.message);
+          if (s.state === "done") {
+            if (pollRef.current) clearInterval(pollRef.current);
+            setState("done");
+          } else if (s.state === "error") {
+            if (pollRef.current) clearInterval(pollRef.current);
+            setState("error");
+          }
+        } catch { /* on réessaie au prochain tick */ }
+      }, 3000);
+    } catch (e: any) {
+      setStatusMsg(e?.response?.data?.detail ?? "Impossible de joindre l'API.");
+      setState("error");
+    }
   };
 
   if (!driftDetected) return null;
@@ -152,13 +167,12 @@ function RetrainPanel({ driftDetected }: { driftDetected: boolean }) {
               <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ display: "flex" }}>
                 <RefreshCw size={14} color="var(--primary-light)" />
               </motion.div>
-              <span style={{ fontSize: 12.5, color: "var(--text-sub)" }}>{steps[step]}</span>
+              <span style={{ fontSize: 12.5, color: "var(--text-sub)" }}>{statusMsg}</span>
             </div>
             <div style={{ height: 7, background: "var(--border)", borderRadius: 6, overflow: "hidden" }}>
-              <motion.div animate={{ width: `${progress}%` }} transition={{ ease: "easeOut" }}
-                style={{ height: "100%", borderRadius: 6, background: "var(--primary-light)" }} />
+              <motion.div animate={{ x: ["-40%", "140%"] }} transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
+                style={{ height: "100%", width: "40%", borderRadius: 6, background: "var(--primary-light)" }} />
             </div>
-            <div style={{ textAlign: "right", fontSize: 10.5, color: "var(--text-muted)", marginTop: 4 }}>{progress.toFixed(0)} %</div>
           </motion.div>
         )}
 
@@ -169,8 +183,32 @@ function RetrainPanel({ driftDetected }: { driftDetected: boolean }) {
               borderRadius: "var(--radius-md)", padding: "11px 12px" }}>
             <CheckCircle2 size={16} color="rgba(16,185,129,1)" style={{ flexShrink: 0 }} />
             <span style={{ fontSize: 12.5, color: "var(--text-sub)" }}>
-              <strong style={{ color: "rgba(16,185,129,1)" }}>Réentraînement déclenché.</strong>{" "}
-              Le pipeline a été relancé ; un nouveau run est enregistré dans MLflow.
+              <strong style={{ color: "rgba(16,185,129,1)" }}>Réentraînement terminé.</strong>{" "}
+              {statusMsg || "Le nouveau modèle a été chargé."} Rechargez la page pour voir les métriques mises à jour.
+            </span>
+          </motion.div>
+        )}
+
+        {state === "simulated" && (
+          <motion.div key="sim" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
+            style={{ display: "flex", alignItems: "center", gap: 8,
+              background: "rgba(37,99,235,0.06)", border: "1px solid rgba(37,99,235,0.30)",
+              borderRadius: "var(--radius-md)", padding: "11px 12px" }}>
+            <Info size={16} color="var(--primary-light)" style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 12.5, color: "var(--text-sub)" }}>
+              <strong style={{ color: "var(--primary-light)" }}>Déclenchement enregistré.</strong> {statusMsg}
+            </span>
+          </motion.div>
+        )}
+
+        {state === "error" && (
+          <motion.div key="err" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            style={{ display: "flex", alignItems: "center", gap: 8,
+              background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.30)",
+              borderRadius: "var(--radius-md)", padding: "11px 12px" }}>
+            <AlertTriangle size={16} color="rgba(220,38,38,1)" style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 12.5, color: "var(--text-sub)" }}>
+              <strong style={{ color: "rgba(220,38,38,1)" }}>Échec.</strong> {statusMsg}
             </span>
           </motion.div>
         )}

@@ -57,19 +57,14 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS : autorise le front en local + le front déployé (Vercel / Render)
+# CORS : autorise le front React (Vite = 5173, CRA = 3000) à appeler l'API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://scoring-credit-mlops.onrender.com",
-    ],
-    allow_origin_regex=r"https://.*\.(onrender\.com|vercel\.app)",
-    allow_credentials=True,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # ─── Chargement du modèle au démarrage ──────────────────────────────────────
 MODEL = None
 METADATA = {}
@@ -296,6 +291,60 @@ def chat(req: ChatRequest):
         raise HTTPException(status_code=502,
                             detail=f"Erreur Hugging Face : {e}")
     return {"reponse": reponse, "client_id": cid}
+
+
+from fastapi import BackgroundTasks
+
+# État du réentraînement (en mémoire, suffisant pour ce projet)
+_RETRAIN = {"state": "idle", "message": "", "started_at": None, "finished_at": None}
+
+
+def _is_cloud() -> bool:
+    """Vrai si l'API tourne sur Render (réentraînement lourd non exécuté)."""
+    return bool(os.environ.get("RENDER") or os.environ.get("RENDER_SERVICE_ID"))
+
+
+def _run_retrain():
+    """Tâche de fond : relance le pipeline d'entraînement puis recharge le modèle."""
+    global _RETRAIN
+    try:
+        from src.train import train
+        train()               # ré-entraîne, réécrit model.pkl + metadata.json
+        _load_model()         # recharge le nouveau modèle en mémoire
+        global _EXPLAINER
+        _EXPLAINER = None     # forcera un nouvel explainer SHAP au prochain /explain
+        _RETRAIN.update(state="done",
+                        message="Réentraînement terminé. Nouveau modèle chargé.",
+                        finished_at=__import__("datetime").datetime.now().isoformat())
+    except Exception as e:  # noqa: BLE001
+        _RETRAIN.update(state="error", message=f"Échec du réentraînement : {e}")
+
+
+@app.post("/retrain")
+def retrain(background: BackgroundTasks):
+    """Déclenche un réentraînement.
+    - En local : lance réellement le pipeline en arrière-plan.
+    - En ligne (Render) : simulé, car le conteneur n'a pas les ressources."""
+    if _is_cloud():
+        return {
+            "mode": "simulated",
+            "message": ("En production, ce déclencheur appellerait un pipeline "
+                        "d'entraînement dédié (GitHub Actions / Airflow). "
+                        "Le réentraînement ne s'exécute pas dans le conteneur de l'API."),
+        }
+    if _RETRAIN["state"] == "running":
+        raise HTTPException(status_code=409, detail="Un réentraînement est déjà en cours.")
+    _RETRAIN.update(state="running", message="Réentraînement en cours…",
+                    started_at=__import__("datetime").datetime.now().isoformat(),
+                    finished_at=None)
+    background.add_task(_run_retrain)
+    return {"mode": "real", "message": "Réentraînement lancé en arrière-plan."}
+
+
+@app.get("/retrain-status")
+def retrain_status():
+    """État du réentraînement en cours (pour le suivi côté front)."""
+    return _RETRAIN
 
 
 @app.get("/health")

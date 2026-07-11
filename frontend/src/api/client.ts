@@ -21,6 +21,9 @@ export const getClient = (id: number) =>
 export const chatMessage = (payload: { messages: { role: string; content: string }[]; client_id?: number }) =>
   API.post("/chat", payload).then((r) => r.data);
 
+export const retrain = () => API.post("/retrain").then((r) => r.data);
+export const getRetrainStatus = () => API.get("/retrain-status").then((r) => r.data);
+
 export const getMetrics = () => API.get("/metrics").then((r) => r.data);
 export const getDrift = () => API.get("/drift").then((r) => r.data);
 export const getStats = () => API.get("/dataset-stats").then((r) => r.data);
