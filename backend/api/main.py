@@ -57,10 +57,16 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS : autorise le front React (Vite = 5173, CRA = 3000) à appeler l'API
+# CORS : autorise le front en local + le front déployé (Vercel / Render)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://scoring-credit-mlops.onrender.com",
+    ],
+    allow_origin_regex=r"https://.*\.(onrender\.com|vercel\.app)",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
