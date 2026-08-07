@@ -1,5 +1,5 @@
 """
-src/drift.py — Étape 7 du TD : analyse du data drift avec Evidently.
+src/drift.py — Analyse du data drift avec Evidently.
 
 Principe :
   - Référence = données d'entraînement (la distribution que le modèle a apprise).

@@ -1,5 +1,5 @@
 """
-src/business_score.py — Étape 3 du TD : définition du score métier.
+src/business_score.py — Définition du score métier.
 
 Contexte crédit :
   - Faux négatif (FN) : on accorde le crédit à un client qui fait DÉFAUT.

@@ -104,7 +104,7 @@ function RetrainPanel({ driftDetected }: { driftDetected: boolean }) {
   useEffect(() => {
     getRetrainStatus()
       .then((s) => { if (s.state === "done") setState("resolved"); })
-      .catch(() => {});
+      .catch(() => { /* ignore */ });
   }, []);
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
@@ -131,7 +131,7 @@ function RetrainPanel({ driftDetected }: { driftDetected: boolean }) {
             if (pollRef.current) clearInterval(pollRef.current);
             setState("error");
           }
-        } catch {}
+        } catch { /* ignore */ }
       }, 3000);
     } catch (e: any) {
       setStatusMsg(e?.response?.data?.detail ?? "Impossible de joindre l'API.");

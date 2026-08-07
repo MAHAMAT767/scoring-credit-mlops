@@ -1,5 +1,5 @@
 """
-src/train.py — Étape 4 du TD : entraînement et comparaison de modèles.
+src/train.py — Entraînement et comparaison de modèles.
 
 Contenu :
   - Baseline (DummyClassifier) + LogisticRegression + RandomForest + XGBoost

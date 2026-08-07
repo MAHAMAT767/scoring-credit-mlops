@@ -1,5 +1,5 @@
 """
-src/data_prep.py — Étape 2 du TD : préparation et traitement des données.
+src/data_prep.py — Préparation et traitement des données.
 
 Pipeline de préparation du dataset "Default of Credit Card Clients" :
   1. Chargement du CSV

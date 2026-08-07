@@ -1,5 +1,5 @@
 """
-api/main.py — Étape 5 du TD : API REST de scoring crédit (FastAPI).
+api/main.py — API REST de scoring crédit (FastAPI).
 
 Endpoints :
   GET  /health   -> état de l'API et du modèle

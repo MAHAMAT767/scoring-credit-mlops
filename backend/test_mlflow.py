@@ -1,5 +1,5 @@
 """
-test_mlflow.py — Étape 1 du TD : test de journalisation MLflow.
+test_mlflow.py — Test de journalisation MLflow.
 
 Objectif : vérifier que le backend de suivi (SQLite) fonctionne en loggant
 une expérience simple avec des paramètres, des métriques et un artefact.

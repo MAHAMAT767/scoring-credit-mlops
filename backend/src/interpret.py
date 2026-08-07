@@ -1,5 +1,5 @@
 """
-src/interpret.py — Étape 4 (interprétabilité) : SHAP + LIME.
+src/interpret.py — Interprétabilité du modèle : SHAP + LIME.
 
 Charge le modèle entraîné et produit :
   - SHAP : importance globale des variables (summary + bar plot) et top drivers
