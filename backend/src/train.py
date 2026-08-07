@@ -51,18 +51,15 @@ warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# ─── Chemins d'artefacts ────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
 ARTIFACTS_DIR = BASE_DIR / "artifacts"
 ARTIFACTS_DIR.mkdir(exist_ok=True)
 
-# Colonnes catégorielles (le reste est numérique / ordinal)
 CATEGORICAL = ["SEX", "EDUCATION", "MARRIAGE"]
 
 CV = StratifiedKFold(n_splits=3, shuffle=True, random_state=RANDOM_STATE)
 
 
-# ─── Préprocesseur ──────────────────────────────────────────────────────────
 def build_preprocessor(X):
     cat = [c for c in CATEGORICAL if c in X.columns]
     num = [c for c in X.columns if c not in cat]
@@ -81,7 +78,6 @@ def make_pipeline(X, model, use_smote=False):
     return ImbPipeline(steps)
 
 
-# ─── Modèles candidats + grilles d'hyperparamètres ──────────────────────────
 def get_candidates(scale_pos_weight):
     """Modèles avec gestion du déséquilibre par pondération, + petites grilles."""
     return {
@@ -104,7 +100,6 @@ def get_candidates(scale_pos_weight):
     }
 
 
-# ─── Évaluation ─────────────────────────────────────────────────────────────
 def evaluate_at_threshold(y_true, y_proba, threshold):
     y_pred = (y_proba >= threshold).astype(int)
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
@@ -119,12 +114,10 @@ def evaluate_at_threshold(y_true, y_proba, threshold):
     }
 
 
-# ─── Pipeline principal ─────────────────────────────────────────────────────
 def train():
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
     mlflow.set_experiment(EXPERIMENT_NAME)
 
-    # 1. Données préparées (étape 2)
     X_train, X_test, y_train, y_test = prepare()
     scale_pos_weight = float((y_train == 0).sum() / (y_train == 1).sum())
     logger.info(f"scale_pos_weight (XGBoost) = {scale_pos_weight:.2f}")
@@ -137,7 +130,6 @@ def train():
             "train_size": len(X_train), "test_size": len(X_test),
         })
 
-        # 2. Baseline
         dummy = DummyClassifier(strategy="stratified", random_state=RANDOM_STATE)
         dummy.fit(X_train, y_train)
         base_proba = dummy.predict_proba(X_test)[:, 1]
@@ -147,31 +139,27 @@ def train():
         logger.info(f"Baseline : ROC-AUC={base_metrics['roc_auc']:.3f} "
                     f"coût/client={base_metrics['cost_per_client']:.3f}")
 
-        # 3. GridSearchCV pour chaque modèle, scoré sur le SCORE MÉTIER
         results = {}
         for name, (model, grid) in get_candidates(scale_pos_weight).items():
             pipe = make_pipeline(X_train, model, use_smote=False)
             gs = GridSearchCV(pipe, grid, scoring=business_scorer, cv=CV, n_jobs=-1)
             gs.fit(X_train, y_train)
-            cv_cost = -gs.best_score_  # scorer négatif -> on repasse en coût positif
+            cv_cost = -gs.best_score_
             results[name] = {"estimator": gs.best_estimator_,
                              "params": gs.best_params_, "cv_cost": cv_cost}
             mlflow.log_metric(f"cv_cost_{name}", round(cv_cost, 4))
             logger.info(f"  {name:7} | coût métier CV = {cv_cost:.4f} | {gs.best_params_}")
 
-        # 4. Sélection du meilleur (coût métier le plus faible)
         best_name = min(results, key=lambda k: results[k]["cv_cost"])
         best_model = results[best_name]["estimator"]
         mlflow.log_param("best_model", best_name)
         logger.info(f"Meilleur modèle : {best_name}")
 
-        # 5. Seuil optimal calculé HORS échantillon (OOF), sans fuite
         oof_proba = cross_val_predict(best_model, X_train, y_train, cv=CV,
                                       method="predict_proba")[:, 1]
         threshold, _ = optimal_threshold(y_train, oof_proba)
         logger.info(f"Seuil optimal (hors échantillon) = {threshold:.3f}")
 
-        # 6. Évaluation finale sur le test
         test_proba = best_model.predict_proba(X_test)[:, 1]
         metrics = evaluate_at_threshold(y_test, test_proba, threshold)
         mlflow.log_metric("threshold", round(threshold, 4))
@@ -186,7 +174,6 @@ def train():
             "tn": metrics["tn"], "tp": metrics["tp"],
         })
 
-        # 7. Comparaison déséquilibre : SMOTE vs pondération (sur le meilleur modèle)
         smote_model = make_pipeline(
             X_train,
             get_candidates(scale_pos_weight)[best_name][0],
@@ -202,7 +189,6 @@ def train():
         logger.info(f"Déséquilibre — pondération: {metrics['cost_per_client']:.4f} | "
                     f"SMOTE: {smote_metrics['cost_per_client']:.4f} (coût/client)")
 
-        # 8. Sauvegarde du modèle + métadonnées
         joblib.dump(best_model, ARTIFACTS_DIR / "model.pkl")
         metadata = {
             "model_name": best_name,
@@ -221,9 +207,6 @@ def train():
         (ARTIFACTS_DIR / "metadata.json").write_text(
             json.dumps(metadata, indent=2, ensure_ascii=False))
 
-        # Enregistrement du modèle dans MLflow. Les pipelines imblearn ne sont pas
-        # gérés par le sérialiseur skops récent : on tente le format cloudpickle,
-        # avec repli sur un artefact joblib si besoin (toujours fonctionnel).
         signature = infer_signature(X_train.head(), best_model.predict_proba(X_train.head()))
         try:
             mlflow.sklearn.log_model(
@@ -235,7 +218,6 @@ def train():
             mlflow.log_artifact(str(ARTIFACTS_DIR / "model.pkl"), artifact_path="model")
         mlflow.log_artifact(str(ARTIFACTS_DIR / "metadata.json"), artifact_path="metadata")
 
-        # ── Rapport console ─────────────────────────────────────────────────
         print("\n" + "=" * 64)
         print("ÉTAPE 4 — COMPARAISON DE MODÈLES")
         print("=" * 64)

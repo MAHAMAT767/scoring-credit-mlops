@@ -3,8 +3,8 @@
   "threshold": 0.3824,
   "cost_fn": 5.0,
   "cost_fp": 1.0,
-  "mlflow_run_id": "a44cf65c91844238ae727a851343a95b",
-  "trained_at": "2026-07-02T18:44:48.553965",
+  "mlflow_run_id": "e0c08ebe1c924b409508b33cd179e561",
+  "trained_at": "2026-07-11T19:43:29.499883",
   "test_metrics": {
     "roc_auc": 0.7770022307436892,
     "f1": 0.4987026466009341,

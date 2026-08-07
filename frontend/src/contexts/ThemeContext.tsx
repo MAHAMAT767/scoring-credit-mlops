@@ -1,4 +1,3 @@
-// src/contexts/ThemeContext.tsx — bascule thème clair/sombre, mémorisée entre les sessions.
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 export type Theme = "light" | "dark";
@@ -16,7 +15,6 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 function getInitialTheme(): Theme {
   const stored = window.localStorage.getItem(STORAGE_KEY);
   if (stored === "light" || stored === "dark") return stored;
-  // Pas de préférence enregistrée -> on suit le thème du système
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 

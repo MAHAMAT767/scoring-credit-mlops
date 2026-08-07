@@ -1,4 +1,3 @@
-// src/App.tsx — routeur de l'application (3 pages).
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";

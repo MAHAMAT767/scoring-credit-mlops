@@ -19,20 +19,17 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-# Import de la config centrale (fonctionne lancé en module depuis backend/)
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import DATA_PATH, TARGET, ID_COL, RANDOM_STATE, TEST_SIZE
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Les 6 colonnes d'historique de paiement (après renommage PAY_0 -> PAY_1)
 PAY_COLS = ["PAY_1", "PAY_2", "PAY_3", "PAY_4", "PAY_5", "PAY_6"]
 BILL_COLS = ["BILL_AMT1", "BILL_AMT2", "BILL_AMT3", "BILL_AMT4", "BILL_AMT5", "BILL_AMT6"]
 PAYAMT_COLS = ["PAY_AMT1", "PAY_AMT2", "PAY_AMT3", "PAY_AMT4", "PAY_AMT5", "PAY_AMT6"]
 
 
-# ─── 1. Chargement ──────────────────────────────────────────────────────────
 def load_data() -> pd.DataFrame:
     """Charge le CSV brut et retire la colonne identifiant."""
     if not DATA_PATH.exists():
@@ -44,7 +41,6 @@ def load_data() -> pd.DataFrame:
     return df
 
 
-# ─── 2. Nettoyage ───────────────────────────────────────────────────────────
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Corrige les catégories non documentées du dataset :
@@ -54,21 +50,16 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
 
-    # Renommage PAY_0 -> PAY_1 (le plus récent des 6 mois)
     if "PAY_0" in df.columns:
         df = df.rename(columns={"PAY_0": "PAY_1"})
 
-    # EDUCATION : regrouper 0/5/6 dans la catégorie "autres" (=4)
     df["EDUCATION"] = df["EDUCATION"].replace({0: 4, 5: 4, 6: 4})
-
-    # MARRIAGE : regrouper 0 dans "autres" (=3)
     df["MARRIAGE"] = df["MARRIAGE"].replace({0: 3})
 
     logger.info("Nettoyage : EDUCATION et MARRIAGE regroupés, PAY_0 -> PAY_1")
     return df
 
 
-# ─── 3. Feature engineering ─────────────────────────────────────────────────
 def _safe_ratio(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
     """Division protégée contre les zéros et les infinis."""
     out = numerator / denominator.replace(0, np.nan)
@@ -82,33 +73,26 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     df = df.copy()
 
-    # Moyennes sur les 6 mois
     df["BILL_MEAN"] = df[BILL_COLS].mean(axis=1)
     df["PAYAMT_MEAN"] = df[PAYAMT_COLS].mean(axis=1)
 
-    # Taux d'utilisation du crédit : encours moyen / limite accordée
     df["CREDIT_UTILIZATION"] = _safe_ratio(df["BILL_MEAN"], df["LIMIT_BAL"])
 
-    # Ratio de remboursement : ce qu'il paie / ce qu'il doit
     df["PAYMENT_RATIO"] = _safe_ratio(df["PAYAMT_MEAN"], df["BILL_MEAN"])
 
-    # Comportement de paiement (encodage PAY_n : >=1 = mois de retard)
     pay = df[PAY_COLS]
-    df["N_MONTHS_DELAYED"] = (pay >= 1).sum(axis=1)          # nb de mois en retard
-    df["MAX_DELAY"] = pay.max(axis=1).clip(lower=0)          # pire retard observé
-    df["MEAN_PAY_STATUS"] = pay.mean(axis=1)                 # tendance générale
+    df["N_MONTHS_DELAYED"] = (pay >= 1).sum(axis=1)
+    df["MAX_DELAY"] = pay.max(axis=1).clip(lower=0)
+    df["MEAN_PAY_STATUS"] = pay.mean(axis=1)
 
-    # Dernier mois : encours et utilisation la plus récente
     df["LAST_BILL_RATIO"] = _safe_ratio(df["BILL_AMT1"], df["LIMIT_BAL"])
 
-    # Client a-t-il déjà été en retard au moins une fois ?
     df["EVER_DELAYED"] = (df["N_MONTHS_DELAYED"] > 0).astype(int)
 
     logger.info("Feature engineering : 8 variables métier créées")
     return df
 
 
-# ─── 4. Traitement conservateur des valeurs extrêmes ────────────────────────
 def clip_outliers(df: pd.DataFrame, cols=None, lower_q=0.01, upper_q=0.99) -> pd.DataFrame:
     """
     Winsorisation (bornage) des colonnes monétaires plutôt que suppression
@@ -128,7 +112,6 @@ def clip_outliers(df: pd.DataFrame, cols=None, lower_q=0.01, upper_q=0.99) -> pd
     return df
 
 
-# ─── 5. Split train/test ────────────────────────────────────────────────────
 def split_data(df: pd.DataFrame):
     """Séparation stratifiée pour préserver le taux de défaut dans les deux jeux."""
     X = df.drop(columns=[TARGET])
@@ -143,7 +126,6 @@ def split_data(df: pd.DataFrame):
     return X_train, X_test, y_train, y_test
 
 
-# ─── Orchestration ──────────────────────────────────────────────────────────
 def prepare(clip: bool = True):
     """Exécute tout le pipeline de préparation et renvoie les splits."""
     df = load_data()

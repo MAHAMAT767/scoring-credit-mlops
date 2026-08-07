@@ -1,4 +1,3 @@
-// src/components/ui.tsx — briques visuelles dans le style du mémoire.
 import { useState, type ReactNode, type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
@@ -11,13 +10,11 @@ export const COLORS = {
   primary: "rgba(37,99,235,1)",
 };
 
-// Convertit une couleur var(--x) en rgba concret pour les fonds translucides
 function cssColor(c: string): string {
   if (c.startsWith("rgba") || c.startsWith("#")) return c;
-  return "rgba(37,99,235,1)"; // fallback pour var(--...)
+  return "rgba(37,99,235,1)";
 }
 
-// ── Reveal (apparition en fondu/translation, pour envelopper un bloc) ───────
 export function Reveal({ children, style, delay = 0 }:
   { children: ReactNode; style?: CSSProperties; delay?: number }) {
   return (
@@ -30,7 +27,6 @@ export function Reveal({ children, style, delay = 0 }:
   );
 }
 
-// ── Carte ───────────────────────────────────────────────────────────────────
 export function Card({ children, style, delay = 0, beam = false, beamColor = "rgba(37,99,235,1)" }:
   { children: ReactNode; style?: CSSProperties; delay?: number; beam?: boolean; beamColor?: string }) {
   return (
@@ -69,7 +65,6 @@ export function SectionLabel({ children }: { children: ReactNode }) {
   );
 }
 
-// ── KPI (chiffre animé + survol + jauge optionnelle) ─────────────────────────
 export function Kpi({
   icon: Icon, label, value, decimals = 0, suffix = "", raw, color = "var(--primary-light)",
   size = "md", delay = 0, gaugeMax, highlight = false, alert,
@@ -122,7 +117,6 @@ export function Kpi({
   );
 }
 
-// ── InsightCard (bloc "à retenir", avec tonalité) ────────────────────────────
 export function InsightCard({ icon: Icon, tone = "neutral", title, text, delay = 0 }:
   { icon?: LucideIcon; tone?: "success" | "danger" | "neutral"; title: string; text: string; delay?: number }) {
   const toneColor = tone === "success" ? COLORS.success : tone === "danger" ? COLORS.danger : COLORS.primary;
@@ -143,7 +137,6 @@ export function InsightCard({ icon: Icon, tone = "neutral", title, text, delay =
   );
 }
 
-// ── EmptyState (état vide / erreur, plein écran de section) ─────────────────
 export function EmptyState({ icon: Icon, tone = "neutral", title, text }:
   { icon?: LucideIcon; tone?: "neutral" | "danger" | "warning"; title: string; text?: string }) {
   const c = tone === "danger" ? COLORS.danger : tone === "warning" ? COLORS.warning : "var(--text-muted)";
@@ -163,7 +156,6 @@ export function EmptyState({ icon: Icon, tone = "neutral", title, text }:
   );
 }
 
-// ── Badge ────────────────────────────────────────────────────────────────────
 export function Badge({ label, color }: { label: string; color: string }) {
   const c = cssColor(color);
   return (

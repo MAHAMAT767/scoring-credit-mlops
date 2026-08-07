@@ -60,13 +60,11 @@ def run_shap(preprocessor, clf, X_train, X_test, n_sample=200):
     explainer = shap.TreeExplainer(clf)
     shap_values = explainer.shap_values(X_sample)
 
-    # Classe positive (défaut) selon le format retourné
     if isinstance(shap_values, list):
         shap_values = shap_values[1]
     elif getattr(shap_values, "ndim", 2) == 3:
         shap_values = shap_values[:, :, 1]
 
-    # 1. Summary plot
     plt.figure()
     shap.summary_plot(shap_values, X_sample, feature_names=feature_names,
                       show=False, max_display=15)
@@ -74,7 +72,6 @@ def run_shap(preprocessor, clf, X_train, X_test, n_sample=200):
     plt.savefig(SHAP_DIR / "shap_summary.png", dpi=150, bbox_inches="tight")
     plt.close()
 
-    # 2. Bar plot (importance moyenne absolue)
     plt.figure()
     shap.summary_plot(shap_values, X_sample, feature_names=feature_names,
                       plot_type="bar", show=False, max_display=15)
@@ -82,7 +79,6 @@ def run_shap(preprocessor, clf, X_train, X_test, n_sample=200):
     plt.savefig(SHAP_DIR / "shap_bar.png", dpi=150, bbox_inches="tight")
     plt.close()
 
-    # 3. Top drivers -> JSON
     mean_abs = np.abs(shap_values).mean(axis=0)
     order = np.argsort(mean_abs)[::-1][:10]
     top = [{
@@ -117,7 +113,6 @@ def run_lime(model, preprocessor, clf, X_train, X_test):
         random_state=42,
     )
 
-    # Choisir le client jugé le plus à risque par le modèle
     proba = clf.predict_proba(X_test_t)[:, 1]
     idx = int(np.argmax(proba))
 
@@ -125,7 +120,6 @@ def run_lime(model, preprocessor, clf, X_train, X_test):
         X_test_t[idx], clf.predict_proba, num_features=10
     )
 
-    # Figure LIME
     fig = exp.as_pyplot_figure()
     plt.tight_layout()
     fig.savefig(SHAP_DIR / "lime_explanation.png", dpi=150, bbox_inches="tight")
@@ -157,7 +151,6 @@ def interpret():
     top = run_shap(preprocessor, clf, X_train, X_test)
     lime_data = run_lime(model, preprocessor, clf, X_train, X_test)
 
-    # Log dans le run d'entraînement existant si disponible
     run_id = meta.get("mlflow_run_id")
     ctx = mlflow.start_run(run_id=run_id) if run_id else mlflow.start_run(run_name="interpret")
     with ctx:

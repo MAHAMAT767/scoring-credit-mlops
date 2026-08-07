@@ -1,4 +1,3 @@
-// src/types/index.ts — Contrat de données partagé avec l'API FastAPI.
 
 export interface ClientData {
   LIMIT_BAL: number;
@@ -33,7 +32,7 @@ export interface ExplainResponse {
 export interface ClientLookup {
   client_id: number;
   client_data: ClientData;
-  actual_default: number; // 0 = a remboursé, 1 = a fait défaut
+  actual_default: number;
 }
 
 export interface TestMetrics {

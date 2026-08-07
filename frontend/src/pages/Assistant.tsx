@@ -1,4 +1,3 @@
-// src/pages/Assistant.tsx — Assistant conversationnel (style mémoire, adapté crédit).
 // Le token Hugging Face reste côté backend : cette page n'appelle que notre API /chat.
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,7 +11,6 @@ interface Msg { role: 'user' | 'assistant'; content: string; ts?: string; id: st
 const mkTs = () => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const mkId = () => Math.random().toString(36).slice(2, 9);
 
-// Mini-conversion markdown -> HTML (gras, code, listes, titres)
 function toHtml(raw: string): string {
   const esc = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const lines = esc.split('\n');
@@ -202,7 +200,6 @@ export default function Assistant() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 276px', gap: '1rem', alignItems: 'start' }}>
-        {/* Zone chat */}
         <div style={{ display: 'flex', flexDirection: 'column', height: 640, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
           <div className="msg-area" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem 1.4rem' }}>
             {messages.length === 0 && !loading ? <EmptyState /> : (
@@ -213,7 +210,6 @@ export default function Assistant() {
             )}
             <div ref={bottomRef} />
           </div>
-          {/* Input */}
           <div style={{ borderTop: '1px solid var(--border)', padding: '0.875rem 1rem' }}>
             <div className="chat-input-wrap" style={{ display: 'flex', gap: 8, alignItems: 'flex-end', border: '1.5px solid var(--border)', borderRadius: 12, padding: '6px 6px 6px 12px', background: 'var(--bg-subtle)' }}>
               <textarea ref={taRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={onKey} rows={1}
@@ -225,7 +221,6 @@ export default function Assistant() {
           </div>
         </div>
 
-        {/* Panneau latéral */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <ConvStats messages={messages} />
           <div style={{ borderRadius: 12, border: '1px solid var(--border)', background: 'var(--card)', padding: '14px 16px' }}>

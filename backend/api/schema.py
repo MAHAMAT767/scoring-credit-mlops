@@ -16,7 +16,6 @@ class ClientData(BaseModel):
     MARRIAGE: int = Field(..., description="1=marié, 2=célibataire, 3=autres")
     AGE: int = Field(..., ge=18, le=100)
 
-    # Historique de paiement des 6 derniers mois (-2..8 ; >=1 = mois de retard)
     PAY_1: int
     PAY_2: int
     PAY_3: int
@@ -24,7 +23,6 @@ class ClientData(BaseModel):
     PAY_5: int
     PAY_6: int
 
-    # Montants facturés (6 mois)
     BILL_AMT1: float
     BILL_AMT2: float
     BILL_AMT3: float
@@ -32,7 +30,6 @@ class ClientData(BaseModel):
     BILL_AMT5: float
     BILL_AMT6: float
 
-    # Montants remboursés (6 mois)
     PAY_AMT1: float
     PAY_AMT2: float
     PAY_AMT3: float

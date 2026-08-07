@@ -1,4 +1,3 @@
-// src/pages/Dashboard.tsx — vue d'ensemble en langage clair (style premium, sans jargon ML).
 import { useQuery } from "@tanstack/react-query";
 import {
   Users, ShieldAlert, ShieldCheck, TrendingDown, SlidersHorizontal, Info,
@@ -25,7 +24,6 @@ export default function Dashboard() {
 
   const t = m?.test_metrics;
 
-  // ── Phrases générées à partir des vraies métriques ──
   const gainPct = m && t && m.baseline_cost_per_client > 0
     ? ((m.baseline_cost_per_client - t.cost_per_client) / m.baseline_cost_per_client) * 100
     : null;
@@ -50,15 +48,12 @@ export default function Dashboard() {
         </div>
       </Reveal>
 
-      {/* Chiffres clés — les deux métriques de contexte côte à côte. */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
         <Kpi delay={0} icon={Users} label="Clients" value={stats?.n_clients ?? 0} color="rgba(37,99,235,1)" />
         <Kpi delay={0.05} icon={ShieldAlert} label="Taux de risque" value={(stats?.default_rate ?? 0) * 100}
              decimals={1} suffix="%" gaugeMax={100} color="rgba(245,158,11,1)" />
       </div>
 
-      {/* Ce que ça change concrètement — le coût par client (l'économie
-          réelle) prend plus de place que les trois métriques de support. */}
       <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 14, marginBottom: 20 }}>
         <Kpi delay={0.15} icon={TrendingDown} label="Coût / client" value={t?.cost_per_client ?? 0}
              decimals={3} color="rgba(16,185,129,1)" highlight
@@ -71,7 +66,6 @@ export default function Dashboard() {
              decimals={1} suffix="%" gaugeMax={100} color="rgba(37,99,235,1)" />
       </div>
 
-      {/* Résultats sur les clients testés, en langage clair — carte mise en avant (beam) */}
       <Card beam beamColor="rgba(37,99,235,1)" delay={0.3}>
         <SectionLabel>Sur les clients testés</SectionLabel>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginTop: 6 }}>
@@ -85,7 +79,6 @@ export default function Dashboard() {
         </p>
       </Card>
 
-      {/* Insights automatiques — en langage clair — carte mise en avant (beam vert) */}
       {m && t && (
         <Card beam beamColor="rgba(16,185,129,1)" delay={0.55} style={{ marginTop: 20 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>

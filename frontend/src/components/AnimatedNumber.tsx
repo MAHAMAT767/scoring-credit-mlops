@@ -1,4 +1,3 @@
-// src/components/AnimatedNumber.tsx — chiffre animé (count-up), style mémoire.
 import { useState, useEffect, useRef } from "react";
 
 export default function AnimatedNumber({ value, decimals = 0, suffix = "" }:

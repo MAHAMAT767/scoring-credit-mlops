@@ -1,4 +1,3 @@
-// src/components/layout/Layout.tsx — coquille de l'application (sidebar + topbar).
 import { Outlet, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck, ShieldAlert } from "lucide-react";
@@ -30,13 +29,9 @@ export default function Layout() {
             color: online ? "var(--success)" : "var(--danger)" }}>
             {online ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
             {online ? "API connectée" : "API hors ligne"}
-             <div style={{ padding: "2px 8px 0", fontSize: 10.5, color: "var(--text-muted)", lineHeight: 1.5 }}>
-          Mahamat Haroun Ibrahim
-        </div>
           </div>
         </div>
         <main style={{ padding: 24, maxWidth: 1240, margin: "0 auto" }}>
-          
           <Outlet />
         </main>
       </div>

@@ -9,3 +9,7 @@ __pycache__/
 mlruns/
 mlflow.db
 *.pdf
+
+# Supports de soutenance et captures d'ecran (conserves en local, non publies)
+*.pptx
+Capture*.png

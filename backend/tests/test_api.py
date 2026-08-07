@@ -15,12 +15,10 @@ from api.main import app, MODEL
 
 client = TestClient(app)
 
-# Certains tests exigent le modèle entraîné (absent en CI) -> ignorés si besoin
 model_required = pytest.mark.skipif(
     MODEL is None, reason="modèle non entraîné (lancer src/train.py)"
 )
 
-# Un client au profil risqué (retards de paiement récents)
 CLIENT_RISQUE = {
     "LIMIT_BAL": 20000, "SEX": 2, "EDUCATION": 2, "MARRIAGE": 1, "AGE": 24,
     "PAY_1": 2, "PAY_2": 2, "PAY_3": 2, "PAY_4": 2, "PAY_5": 2, "PAY_6": 2,
@@ -30,7 +28,6 @@ CLIENT_RISQUE = {
     "PAY_AMT4": 0, "PAY_AMT5": 0, "PAY_AMT6": 0,
 }
 
-# Un client au profil sain (jamais en retard, rembourse bien)
 CLIENT_SAIN = {
     "LIMIT_BAL": 200000, "SEX": 1, "EDUCATION": 1, "MARRIAGE": 2, "AGE": 40,
     "PAY_1": -1, "PAY_2": -1, "PAY_3": -1, "PAY_4": -1, "PAY_5": -1, "PAY_6": -1,

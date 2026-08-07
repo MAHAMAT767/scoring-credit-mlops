@@ -1,4 +1,3 @@
-// src/components/layout/Sidebar.tsx — navigation latérale (style mémoire).
 import { NavLink } from "react-router-dom";
 import { LayoutDashboard, Search, SlidersHorizontal, CreditCard, Bot, Sun, Moon } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";

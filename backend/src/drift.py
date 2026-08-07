@@ -39,14 +39,11 @@ ARTIFACTS_DIR = BASE_DIR / "artifacts"
 MONITORING_DIR = BASE_DIR / "logs" / "monitoring"
 MONITORING_DIR.mkdir(parents=True, exist_ok=True)
 
-# Seuil d'alerte : au-delà de 30 % de variables en dérive, on recommande un réentraînement
 DRIFT_THRESHOLD = 0.30
 
-# Variables de comportement de paiement (les plus critiques pour le crédit)
 PAY_COLS = ["PAY_1", "PAY_2", "PAY_3", "PAY_4", "PAY_5", "PAY_6"]
 
 
-# ─── Simulation d'un portefeuille dégradé (pour la démonstration) ───────────
 def simulate_drift(X: pd.DataFrame) -> pd.DataFrame:
     """
     Simule une dérive réaliste : dégradation du comportement de paiement
@@ -56,7 +53,7 @@ def simulate_drift(X: pd.DataFrame) -> pd.DataFrame:
     Xd = X.copy()
     for c in PAY_COLS:
         if c in Xd.columns:
-            Xd[c] = Xd[c] + 1                       # +1 mois de retard partout
+            Xd[c] = Xd[c] + 1
     if "N_MONTHS_DELAYED" in Xd.columns:
         Xd["N_MONTHS_DELAYED"] = (Xd["N_MONTHS_DELAYED"] + 1).clip(upper=6)
     if "MAX_DELAY" in Xd.columns:
@@ -68,7 +65,6 @@ def simulate_drift(X: pd.DataFrame) -> pd.DataFrame:
     return Xd
 
 
-# ─── Exécution d'un rapport de dérive ───────────────────────────────────────
 def run_drift_report(reference: pd.DataFrame, current: pd.DataFrame, tag: str) -> dict:
     """Lance Evidently, sauvegarde le rapport HTML et renvoie un résumé chiffré."""
     report = Report(metrics=[DataDriftPreset()])
@@ -78,9 +74,8 @@ def run_drift_report(reference: pd.DataFrame, current: pd.DataFrame, tag: str) -
     html_path = MONITORING_DIR / f"data_drift_{tag}_{stamp}.html"
     snapshot.save_html(str(html_path))
 
-    # La 1re métrique du preset = part de colonnes en dérive
     result = snapshot.dict()
-    drift = result["metrics"][0]["value"]  # {'count': .., 'share': ..}
+    drift = result["metrics"][0]["value"]
     n_drifted = int(drift["count"])
     share = float(drift["share"])
 
@@ -88,7 +83,6 @@ def run_drift_report(reference: pd.DataFrame, current: pd.DataFrame, tag: str) -
             "html_report": str(html_path)}
 
 
-# ─── Dérive des prédictions ─────────────────────────────────────────────────
 def prediction_drift(reference: pd.DataFrame, current: pd.DataFrame) -> dict:
     """Compare la distribution des probabilités de défaut prédites (ref vs courant)."""
     model_path = ARTIFACTS_DIR / "model.pkl"
@@ -102,7 +96,6 @@ def prediction_drift(reference: pd.DataFrame, current: pd.DataFrame) -> dict:
             "hausse_relative": round(float((p_cur - p_ref) / p_ref * 100), 1)}
 
 
-# ─── Décision d'alerte / réentraînement ─────────────────────────────────────
 def decide(summary: dict) -> str:
     if summary["drift_share"] >= DRIFT_THRESHOLD:
         return "ALERTE : dérive significative -> réentraînement recommandé"
@@ -111,7 +104,6 @@ def decide(summary: dict) -> str:
     return "OK : pas de dérive détectée"
 
 
-# ─── Orchestration ──────────────────────────────────────────────────────────
 def monitor():
     X_train, X_test, y_train, y_test = prepare()
     reference = X_train
@@ -136,7 +128,6 @@ def monitor():
     (MONITORING_DIR / "drift_summary.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    # ── Rapport console ─────────────────────────────────────────────────────
     print("\n" + "=" * 66)
     print("ÉTAPE 7 — ANALYSE DU DATA DRIFT")
     print("=" * 66)

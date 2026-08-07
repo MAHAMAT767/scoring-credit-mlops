@@ -14,23 +14,18 @@ from config import MLFLOW_TRACKING_URI, EXPERIMENT_NAME, RANDOM_STATE
 
 
 def main() -> str:
-    # 1. Configuration du backend de suivi
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
     mlflow.set_experiment(EXPERIMENT_NAME)
 
-    # 2. Démarrage d'un run et journalisation
     with mlflow.start_run(run_name="test_setup_etape1") as run:
-        # -- Paramètres --
         mlflow.log_param("dataset", "UCI_Credit_Card")
         mlflow.log_param("random_state", RANDOM_STATE)
         mlflow.log_param("objectif", "verification_environnement")
 
-        # -- Métriques (valeurs de démonstration) --
         mlflow.log_metric("n_clients", 30000)
-        mlflow.log_metric("taux_defaut", 0.221)          # 22,1 % de défauts
-        mlflow.log_metric("baseline_accuracy", 0.779)    # classe majoritaire
+        mlflow.log_metric("taux_defaut", 0.221)
+        mlflow.log_metric("baseline_accuracy", 0.779)
 
-        # -- Artefact --
         artifact = Path("mlflow_test_artifact.txt")
         artifact.write_text(
             "Etape 1 - Environnement MLflow operationnel.\n"
@@ -38,11 +33,10 @@ def main() -> str:
             encoding="utf-8",
         )
         mlflow.log_artifact(str(artifact))
-        artifact.unlink()  # nettoyage du fichier local temporaire
+        artifact.unlink()
 
         run_id = run.info.run_id
 
-    # 3. Récapitulatif console
     print("\n" + "=" * 60)
     print("ETAPE 1 - JOURNALISATION MLFLOW REUSSIE")
     print("=" * 60)

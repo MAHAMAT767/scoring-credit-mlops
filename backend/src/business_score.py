@@ -18,12 +18,10 @@ Le score métier sert à deux choses :
 import numpy as np
 from sklearn.metrics import confusion_matrix, make_scorer
 
-# ─── Coûts relatifs (paramétrables) ─────────────────────────────────────────
-COST_FN = 5.0   # coût d'un faux négatif (défaut accordé)
-COST_FP = 1.0   # coût d'un faux positif (bon client refusé)
+COST_FN = 5.0
+COST_FP = 1.0
 
 
-# ─── Fonction de coût ───────────────────────────────────────────────────────
 def business_cost(y_true, y_pred, cost_fn: float = COST_FN, cost_fp: float = COST_FP) -> float:
     """Coût total = cost_fn * (nb faux négatifs) + cost_fp * (nb faux positifs)."""
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
@@ -36,7 +34,6 @@ def business_cost_per_client(y_true, y_pred, cost_fn: float = COST_FN,
     return business_cost(y_true, y_pred, cost_fn, cost_fp) / len(y_true)
 
 
-# ─── Sélection du seuil optimal ─────────────────────────────────────────────
 def _positive_proba(y_proba) -> np.ndarray:
     """Retourne la proba de la classe positive, que l'entrée soit 1D ou 2D."""
     y_proba = np.asarray(y_proba)
@@ -59,7 +56,6 @@ def optimal_threshold(y_true, y_proba, cost_fn: float = COST_FN,
     return float(thresholds[best]), float(costs[best])
 
 
-# ─── Scorer sklearn (pour GridSearchCV) ─────────────────────────────────────
 def _business_score_func(y_true, y_proba, cost_fn: float = COST_FN,
                          cost_fp: float = COST_FP) -> float:
     """
@@ -71,7 +67,6 @@ def _business_score_func(y_true, y_proba, cost_fn: float = COST_FN,
 
 
 # greater_is_better=False -> GridSearchCV cherchera à MINIMISER le coût.
-# response_method="predict_proba" -> le scorer reçoit les probabilités.
 business_scorer = make_scorer(
     _business_score_func,
     greater_is_better=False,
@@ -79,11 +74,9 @@ business_scorer = make_scorer(
 )
 
 
-# ─── Démonstration ──────────────────────────────────────────────────────────
 if __name__ == "__main__":
     print(f"Coûts : FN={COST_FN} | FP={COST_FP} (ratio {COST_FN/COST_FP:.0f}:1)")
-    # Petit exemple synthétique
     y_true = np.array([0, 0, 1, 1, 0, 1])
-    y_pred = np.array([0, 1, 0, 1, 0, 1])  # 1 FP, 1 FN
+    y_pred = np.array([0, 1, 0, 1, 0, 1])
     print("Coût exemple :", business_cost(y_true, y_pred),
           "=", f"{COST_FN}*1(FN) + {COST_FP}*1(FP)")

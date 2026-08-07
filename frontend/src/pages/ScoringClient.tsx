@@ -1,5 +1,3 @@
-// src/pages/ScoringClient.tsx — recherche par ID, jauge, facteurs SHAP.
-// Composants et animations repris du mémoire, adaptés au scoring crédit.
 import { useState, useRef, useEffect } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -10,7 +8,6 @@ import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { getClient, predict, explain } from '../api/client';
 import type { ClientData, ScoreResponse, ExplainResponse } from '../types';
 
-// ── Composants animés (repris du mémoire) ────────────────────────────────────
 function SpotlightCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ x: 0, y: 0 });
@@ -52,14 +49,12 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   );
 }
 
-// ── Couleurs risque (crédit : faible / modéré / élevé) ───────────────────────
 const RISQUE_C: Record<string, string> = { faible: 'var(--success)', 'modéré': 'var(--warning)', 'élevé': 'var(--danger)' };
 const RISQUE_BG: Record<string, string> = { faible: 'var(--success-bg)', 'modéré': 'var(--warning-bg)', 'élevé': 'var(--danger-bg)' };
 const RISQUE_BORDER: Record<string, string> = { faible: 'var(--success-border)', 'modéré': 'var(--warning-border)', 'élevé': 'var(--danger-border)' };
 const RISQUE_GLOW: Record<string, string> = { faible: 'rgba(16,185,129,0.25)', 'modéré': 'rgba(245,158,11,0.25)', 'élevé': 'rgba(220,38,38,0.3)' };
 const BEAM_COLOR: Record<string, string> = { faible: '#10b981', 'modéré': '#f59e0b', 'élevé': '#ef4444' };
 
-// ── Traductions des variables crédit ─────────────────────────────────────────
 const FEATURE_FR: Record<string, string> = {
   LIMIT_BAL: 'Limite de crédit', AGE: 'Âge', SEX: 'Sexe', EDUCATION: "Niveau d'études", MARRIAGE: 'Statut marital',
   PAY_1: 'Statut paiement M1', PAY_2: 'Statut paiement M2', PAY_3: 'Statut paiement M3',
@@ -90,7 +85,6 @@ function riskBadge(niveau: string) {
   return <span style={{ fontSize: 11, fontWeight: 700, color: c, background: RISQUE_BG[niveau], border: `1px solid ${RISQUE_BORDER[niveau]}`, padding: '2px 10px', borderRadius: 20 }}>{niveau.toUpperCase()}</span>;
 }
 
-// ── Jauge circulaire (reprise du mémoire) ────────────────────────────────────
 function GaugeCircle({ pct, couleur }: { pct: number; couleur: string }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
@@ -224,7 +218,6 @@ function AnalysisLoader() {
 const EDU: Record<number, string> = { 1: 'Master', 2: 'Université', 3: 'Lycée', 4: 'Autres' };
 const MAR: Record<number, string> = { 1: 'Marié(e)', 2: 'Célibataire', 3: 'Autres' };
 
-// ── Page ─────────────────────────────────────────────────────────────────────
 export default function ScoringClient() {
   const [searchId, setSearchId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -284,7 +277,6 @@ export default function ScoringClient() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Recherche */}
       <Reveal>
         <motion.div whileHover={{ borderColor: 'var(--primary-light)', boxShadow: '0 0 24px rgba(37,99,235,0.12)' }} transition={{ duration: 0.3 }}
           style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1.25rem 1.4rem', boxShadow: 'var(--shadow-xs)', position: 'relative', overflow: 'hidden' }}>
@@ -319,7 +311,6 @@ export default function ScoringClient() {
         {pred && client && !loading && (
           <motion.div ref={resultRef} initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-            {/* Carte client */}
             <Reveal delay={0.05}>
               <SpotlightCard style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1.25rem 1.4rem', boxShadow: 'var(--shadow-xs)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
@@ -352,7 +343,6 @@ export default function ScoringClient() {
               </SpotlightCard>
             </Reveal>
 
-            {/* Jauge + résultat */}
             <Reveal delay={0.1}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <motion.div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1.25rem 1.4rem', position: 'relative', overflow: 'hidden', boxShadow: `0 0 30px ${RISQUE_GLOW[niveau]}` }}>
@@ -407,7 +397,6 @@ export default function ScoringClient() {
               </div>
             </Reveal>
 
-            {/* Facteurs SHAP */}
             {contribs.length > 0 && (
               <Reveal delay={0.2}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -441,7 +430,6 @@ export default function ScoringClient() {
               </Reveal>
             )}
 
-            {/* Visualisation SHAP */}
             {chartData.length > 0 && (
               <Reveal delay={0.25}>
                 <SpotlightCard style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1.25rem 1.4rem' }}>
@@ -464,7 +452,6 @@ export default function ScoringClient() {
               </Reveal>
             )}
 
-            {/* Recommandation */}
             {reco && (
               <Reveal delay={0.3}>
                 <motion.div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '1.25rem 1.4rem', position: 'relative', overflow: 'hidden', boxShadow: `0 0 20px ${RISQUE_GLOW[niveau]}` }}>

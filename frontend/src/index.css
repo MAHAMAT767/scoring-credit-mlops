@@ -144,7 +144,6 @@ tr:last-child td { border-bottom: none; }
 tr:hover td { background: var(--bg-subtle); }
 thead tr { border-bottom: 1px solid var(--border); }
 
-/* ── Animations (une seule définition de chaque) ── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }

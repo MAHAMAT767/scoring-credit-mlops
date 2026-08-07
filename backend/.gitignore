@@ -31,3 +31,6 @@ logs/
 !logs/
 !logs/monitoring/
 !logs/monitoring/drift_summary.json
+
+# Rapports HTML Evidently : regenerables via python -m src.drift
+logs/monitoring/*.html
