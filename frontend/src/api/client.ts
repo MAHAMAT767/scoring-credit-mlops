@@ -1,6 +1,3 @@
-// src/api/client.ts — Appels à l'API de scoring crédit.
-// Même patron que le mémoire (instance axios + fonctions), adapté au TD :
-// routes SANS préfixe /api, contrat ScoreResponse/ExplainResponse.
 
 import axios from "axios";
 import type { ClientData, ScoreResponse, ExplainResponse, ClientLookup } from "../types";

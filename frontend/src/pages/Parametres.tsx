@@ -1,4 +1,3 @@
-// src/pages/Parametres.tsx — métriques, performances, MLflow, data drift.
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, GitBranch, Radar, Scale, RefreshCw, CheckCircle2, AlertTriangle, Info } from "lucide-react";
@@ -98,9 +97,15 @@ export default function Parametres() {
 }
 
 function RetrainPanel({ driftDetected }: { driftDetected: boolean }) {
-  const [state, setState] = useState<"idle" | "training" | "done" | "error" | "simulated">("idle");
+  const [state, setState] = useState<"idle" | "training" | "done" | "error" | "simulated" | "resolved">("idle");
   const [statusMsg, setStatusMsg] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    getRetrainStatus()
+      .then((s) => { if (s.state === "done") setState("resolved"); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
@@ -114,7 +119,6 @@ function RetrainPanel({ driftDetected }: { driftDetected: boolean }) {
         setState("simulated");
         return;
       }
-      // Mode réel (local) : on suit l'état jusqu'à la fin
       setStatusMsg("Réentraînement en cours (peut prendre quelques minutes)…");
       pollRef.current = setInterval(async () => {
         try {
@@ -127,7 +131,7 @@ function RetrainPanel({ driftDetected }: { driftDetected: boolean }) {
             if (pollRef.current) clearInterval(pollRef.current);
             setState("error");
           }
-        } catch { /* on réessaie au prochain tick */ }
+        } catch {}
       }, 3000);
     } catch (e: any) {
       setStatusMsg(e?.response?.data?.detail ?? "Impossible de joindre l'API.");
@@ -137,17 +141,21 @@ function RetrainPanel({ driftDetected }: { driftDetected: boolean }) {
 
   if (!driftDetected) return null;
 
+  const showAlert = state === "idle" || state === "training" || state === "error";
+
   return (
     <div style={{ marginTop: 14, borderTop: "1px solid var(--border)", paddingTop: 14 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12,
-        background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.30)",
-        borderRadius: "var(--radius-md)", padding: "10px 12px" }}>
-        <AlertTriangle size={16} color="rgba(220,38,38,1)" style={{ flexShrink: 0 }} />
-        <span style={{ fontSize: 12.5, color: "var(--text-sub)" }}>
-          <strong style={{ color: "rgba(220,38,38,1)" }}>Dérive significative détectée.</strong>{" "}
-          Un réentraînement du modèle est recommandé.
-        </span>
-      </div>
+      {showAlert && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12,
+          background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.30)",
+          borderRadius: "var(--radius-md)", padding: "10px 12px" }}>
+          <AlertTriangle size={16} color="rgba(220,38,38,1)" style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: 12.5, color: "var(--text-sub)" }}>
+            <strong style={{ color: "rgba(220,38,38,1)" }}>Dérive significative détectée.</strong>{" "}
+            Un réentraînement du modèle est recommandé.
+          </span>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {state === "idle" && (
@@ -185,6 +193,19 @@ function RetrainPanel({ driftDetected }: { driftDetected: boolean }) {
             <span style={{ fontSize: 12.5, color: "var(--text-sub)" }}>
               <strong style={{ color: "rgba(16,185,129,1)" }}>Réentraînement terminé.</strong>{" "}
               {statusMsg || "Le nouveau modèle a été chargé."} Rechargez la page pour voir les métriques mises à jour.
+            </span>
+          </motion.div>
+        )}
+
+        {state === "resolved" && (
+          <motion.div key="resolved" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
+            style={{ display: "flex", alignItems: "center", gap: 8,
+              background: "rgba(16,185,129,0.07)", border: "1px solid rgba(16,185,129,0.30)",
+              borderRadius: "var(--radius-md)", padding: "11px 12px" }}>
+            <CheckCircle2 size={16} color="rgba(16,185,129,1)" style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 12.5, color: "var(--text-sub)" }}>
+              <strong style={{ color: "rgba(16,185,129,1)" }}>Modèle réentraîné — surveillance réinitialisée.</strong>{" "}
+              L'alerte de dérive a été prise en charge.
             </span>
           </motion.div>
         )}

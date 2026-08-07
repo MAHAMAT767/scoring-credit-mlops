@@ -27,7 +27,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.data_prep import clean_data, build_features
 from api.schema import ClientData, ScoreResponse
 
-# Charge le fichier backend/.env (token Hugging Face) s'il existe
 try:
     from dotenv import load_dotenv
     load_dotenv(Path(__file__).resolve().parent.parent / ".env")
@@ -50,14 +49,12 @@ def _load_json(path: Path):
 BASE_DIR = Path(__file__).resolve().parent.parent
 ARTIFACTS_DIR = BASE_DIR / "artifacts"
 
-# ─── Application ────────────────────────────────────────────────────────────
 app = FastAPI(
     title="API de scoring crédit",
     description="Prédit le risque de défaut de paiement d'un client.",
     version="1.0.0",
 )
 
-# CORS : autorise le front en local + le front déployé (Vercel / Render)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -71,11 +68,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── Chargement du modèle au démarrage ──────────────────────────────────────
 MODEL = None
 METADATA = {}
-_EXPLAINER = None  # SHAP, chargé paresseusement
-_RAW_DF = None     # dataset brut, pour la recherche par ID
+_EXPLAINER = None
+_RAW_DF = None
 
 
 def _load_model():
@@ -91,7 +87,6 @@ def _load_model():
                 f"(seuil={METADATA.get('threshold', 0.5):.3f})")
 
 
-# Chargement au moment de l'import (fonctionne avec uvicorn ET avec TestClient)
 _load_model()
 
 
@@ -107,11 +102,10 @@ def _load_raw_dataset():
 _load_raw_dataset()
 
 
-# ─── Préparation des features (mêmes transformations qu'à l'entraînement) ────
 def _prepare_one(data: ClientData) -> pd.DataFrame:
     df = pd.DataFrame([data.model_dump()])
-    df = clean_data(df)       # remap EDUCATION/MARRIAGE
-    df = build_features(df)   # features métier
+    df = clean_data(df)
+    df = build_features(df)
     return df
 
 
@@ -123,7 +117,6 @@ def _risk_level(p: float) -> str:
     return "élevé"
 
 
-# ─── Endpoints ──────────────────────────────────────────────────────────────
 @app.get("/client/{client_id}")
 def get_client(client_id: int):
     """Récupère les données brutes d'un client du dataset à partir de son ID,
@@ -135,7 +128,6 @@ def get_client(client_id: int):
         raise HTTPException(status_code=404, detail=f"Client {client_id} introuvable (IDs de 1 à {len(_RAW_DF)}).")
     r = row.iloc[0]
 
-    # Regroupement des catégories non documentées pour un affichage propre
     edu = int(r["EDUCATION"]); edu = 4 if edu in (0, 5, 6) else edu
     mar = int(r["MARRIAGE"]);  mar = 3 if mar == 0 else mar
 
@@ -214,7 +206,7 @@ def _client_context(cid: int) -> str:
     def _d(x):
         return x.model_dump() if hasattr(x, "model_dump") else x
     try:
-        lookup = get_client(cid)          # profil + issue réelle
+        lookup = get_client(cid)
         data = lookup["client_data"]
         score = _d(predict(ClientData(**data)))  # type: ignore[arg-type]
         exp = _d(explain(ClientData(**data)))    # type: ignore[arg-type]
@@ -273,7 +265,6 @@ def chat(req: ChatRequest):
         raise HTTPException(status_code=503,
                             detail="Assistant non configuré : ajoutez HF_TOKEN dans backend/.env")
 
-    # Détection d'un ID client dans le dernier message (accès aux données)
     cid = req.client_id
     if cid is None and req.messages:
         last = req.messages[-1].content
@@ -301,7 +292,6 @@ def chat(req: ChatRequest):
 
 from fastapi import BackgroundTasks
 
-# État du réentraînement (en mémoire, suffisant pour ce projet)
 _RETRAIN = {"state": "idle", "message": "", "started_at": None, "finished_at": None}
 
 
@@ -315,10 +305,10 @@ def _run_retrain():
     global _RETRAIN
     try:
         from src.train import train
-        train()               # ré-entraîne, réécrit model.pkl + metadata.json
-        _load_model()         # recharge le nouveau modèle en mémoire
+        train()
+        _load_model()
         global _EXPLAINER
-        _EXPLAINER = None     # forcera un nouvel explainer SHAP au prochain /explain
+        _EXPLAINER = None
         _RETRAIN.update(state="done",
                         message="Réentraînement terminé. Nouveau modèle chargé.",
                         finished_at=__import__("datetime").datetime.now().isoformat())
