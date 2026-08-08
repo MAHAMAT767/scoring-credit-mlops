@@ -318,4 +318,4 @@ Le token n'est **jamais** exposé au navigateur : le frontend n'appelle que l'en
 ## 👤 Auteur
 
 **Mahamat Haroun Ibrahim** — Master 2 Informatique de Gestion
-Projet réalisé dans le cadre d'un examen MLOps.
+
