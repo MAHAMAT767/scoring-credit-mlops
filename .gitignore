@@ -13,3 +13,6 @@ mlflow.db
 # Supports de soutenance et captures d'ecran (conserves en local, non publies)
 *.pptx
 Capture*.png
+
+# Video de demo (conservee en local, trop lourde pour le depot)
+docs/screenshots/*.mp4
